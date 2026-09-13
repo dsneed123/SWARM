@@ -14,6 +14,7 @@ import sys
 import time
 from typing import Any
 
+from swarm.config import load_settings
 from swarm.service.protocol import LocalClient, SocketClient
 
 GB = 1024**3
@@ -44,14 +45,20 @@ def dur(seconds: float | None) -> str:
 
 
 def out(line: str = "") -> None:
-    print(line, flush=True)
+    try:
+        print(line, flush=True)
+    except BrokenPipeError:  # piped into head etc.
+        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+        raise SystemExit(0) from None
 
 
 # --- connection --------------------------------------------------------------
 
 
-async def connect(workspace: str | None = None, *, embedded: bool = False, demo: bool = False, quiet: bool = False):
-    """Return (client, on_exit). Starts the background service when needed."""
+async def connect(workspace: str | None = None, *, embedded: bool = False, demo: bool = False, quiet: bool = False,
+                  autostart: bool = True):
+    """Return (client, on_exit). Starts the background service when needed and allowed;
+    otherwise falls back to an in-process engine."""
     from swarm.tui.app import _connect  # shares the auto-start logic
 
     if quiet:
@@ -59,9 +66,9 @@ async def connect(workspace: str | None = None, *, embedded: bool = False, demo:
         import io
 
         with contextlib.redirect_stdout(io.StringIO()):
-            client, _label, on_exit = await _connect(workspace, embedded, demo)
+            client, _label, on_exit = await _connect(workspace, embedded, demo, autostart)
     else:
-        client, _label, on_exit = await _connect(workspace, embedded, demo)
+        client, _label, on_exit = await _connect(workspace, embedded, demo, autostart)
     return client, on_exit
 
 
@@ -340,9 +347,19 @@ async def prompt_loop(workspace: str | None, *, embedded: bool, demo: bool) -> N
             await on_exit()
 
 
+READ_ONLY = ("tasks", "task", "status", "models", "workflows", "permissions")
+
+
 async def one_shot(workspace: str | None, command: str, args: list[str], *, embedded: bool = False, demo: bool = False) -> None:
-    client, on_exit = await connect(workspace, embedded=embedded, demo=demo, quiet=True)
+    from swarm.service.daemon import service_pid
+
+    settings = load_settings(workspace)
+    running = service_pid(settings.workspace) is not None
+    # Read-only commands never start the service; they look at the workspace in-process instead.
+    client, on_exit = await connect(workspace, embedded=embedded, demo=demo, quiet=True, autostart=command not in READ_ONLY)
     try:
+        if command == "status":
+            out(f"service   {'running' if running else 'not running (showing an in-process view)'}")
         if command == "ask":
             await Runner(client).run(" ".join(args))
         elif command == "run":

@@ -256,13 +256,13 @@ async def _start_service(settings) -> str | None:
     return f"service did not start; see {ws.logs / 'service.log'}"
 
 
-async def _connect(workspace: str | None, embedded: bool, demo: bool):
+async def _connect(workspace: str | None, embedded: bool, demo: bool, autostart: bool = True):
     """Return (client, label, on_exit)."""
     settings = load_settings(workspace)
     sock = str(settings.socket_path)
     if not embedded and not demo:
         client = await _try_socket(sock)
-        if client is None:
+        if client is None and autostart:
             print("starting the swarm service in the background…", flush=True)
             err = await _start_service(settings)
             if err is None:
