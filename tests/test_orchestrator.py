@@ -290,3 +290,24 @@ async def test_snapshot_shape(tmp_path):
     assert "transcript" in full and "instruction" in full
     await orch.stop()
     await h.stop()
+
+
+async def test_reassign_records_intervention_against_previous_model(tmp_path):
+    from swarm.models.fake import FakeModel
+
+    slow = [FakeModel("small:7b", 7, 4.5, latency_s=0.4), FakeModel("medium:14b", 14, 9.0, latency_s=0.4), FakeModel("large:70b", 70, 42.0, latency_s=0.4)]
+    h, orch = await make(tmp_path, Scripted(), models=slow)
+    task = orch.submit("capital?")
+    for _ in range(100):
+        await asyncio.sleep(0.05)
+        run = orch.runs.get(task.id)
+        if run and any(a.model for a in h.runtime.agents.values() if a.spec.node_id == "research"):
+            break
+    assert orch.reassign_model(task.id, "research", "medium:14b")
+    t = await wait_done(orch, task.id)
+    assert t.status == TaskStatus.COMPLETED, t.error
+    assert any(f["kind"] == "user_reassign" and f["model"] == "small:7b" for f in orch.failures.recent(20))
+    assert h.profiles.get("small:7b").per_capability["research"].failures >= 1
+    assert any(i["action"] == "reassign" for i in t.interventions)
+    await orch.stop()
+    await h.stop()

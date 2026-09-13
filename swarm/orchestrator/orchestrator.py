@@ -258,6 +258,17 @@ class Orchestrator:
         st = run.dag.states[node_id]
         st.notes.append(f"user reassigned model={model} tier={tier}")
         run.task.interventions.append({"ts": time.time(), "action": "reassign", "node": node_id, "model": model, "tier": tier})
+        # Learn conservatively from the intervention: the model the user moved away from
+        # gets one failure for this capability, which nudges future routing.
+        previous = {self.runtime.get(aid).model for aid in run.node_agents.get(node_id, []) if self.runtime.get(aid) and self.runtime.get(aid).model}
+        for prev_model in previous:
+            if prev_model != model:
+                prof = self.scheduler.profiles.get(prev_model)
+                if prof:
+                    prof.record_call(node.capability, ok=False, duration_s=0.0, ts=time.time())
+                    self.scheduler.profiles.save(prof)
+                self.failures.record(task_id=task_id, node_id=node_id, model=prev_model, capability=node.capability,
+                                     kind="user_reassign", action="reassign", message=f"user moved node to model={model} tier={tier}")
         if st.status in (NodeStatus.RUNNING, NodeStatus.CONSENSUS):
             for aid in run.node_agents.get(node_id, []):
                 self.runtime.cancel(aid)
