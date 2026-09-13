@@ -1,0 +1,34 @@
+name: Verified research
+description: Three independent researchers, an adversarial critic, verification of the key claims, and a deep synthesis with citations.
+objective_class: research
+nodes:
+  - id: research
+    name: Independent research
+    capability: research
+    instruction: "Research this question thoroughly using web sources: {objective}"
+    tier: fast
+    redundancy: 3
+    consensus:
+      mode: evidence
+      max_extra_agents: 2
+  - id: critique
+    name: Critique
+    capability: criticism
+    instruction: "Critically review the research findings for the objective: {objective}"
+    depends_on: [research]
+    tier: standard
+  - id: verify
+    name: Verify key claims
+    capability: verification
+    instruction: "Independently verify the most important claims made in the research for: {objective}"
+    depends_on: [research]
+    tier: fast
+    redundancy: 2
+  - id: synthesis
+    name: Final synthesis
+    capability: synthesis
+    instruction: "Write the final, well-cited answer to: {objective}"
+    depends_on: [critique, verify]
+    context_from: [research, critique, verify]
+    tier: deep
+final_node: synthesis

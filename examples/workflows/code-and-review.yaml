@@ -1,0 +1,29 @@
+name: Code and review
+description: Plan, implement, test with Python, and review the implementation.
+objective_class: coding
+permissions:
+  shell: deny
+nodes:
+  - id: plan
+    capability: planning
+    instruction: "Plan the implementation for: {objective}"
+    tier: standard
+  - id: implement
+    capability: coding
+    instruction: "Implement the plan for: {objective}. Run your code with the python tool."
+    depends_on: [plan]
+    tier: standard
+    tools: [python, read_file, write_file, list_files]
+  - id: review
+    capability: criticism
+    instruction: "Review the implementation for correctness, edge cases and clarity: {objective}"
+    depends_on: [implement]
+    tier: deep
+  - id: finalize
+    capability: coding
+    instruction: "Apply the review feedback and deliver the final code for: {objective}"
+    depends_on: [review]
+    context_from: [implement, review]
+    tier: standard
+    tools: [python, read_file, write_file, list_files]
+final_node: finalize

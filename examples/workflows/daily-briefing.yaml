@@ -1,0 +1,27 @@
+name: Daily briefing
+description: A persistent analyst keeps notes across runs and writes a short briefing. Demonstrates persistent agents and permission overrides.
+objective_class: writing
+mode: autonomous
+permissions:
+  write_file: allow
+  shell: deny
+nodes:
+  - id: gather
+    capability: research
+    instruction: "Collect the latest developments relevant to: {objective}"
+    tier: fast
+    redundancy: 2
+  - id: analyst
+    name: Persistent analyst
+    capability: analysis
+    instruction: "Compare today's findings with your notes from previous runs and highlight what changed: {objective}"
+    depends_on: [gather]
+    persistent: true
+    tier: standard
+  - id: brief
+    capability: writing
+    instruction: "Write a concise briefing (under 400 words) on: {objective}"
+    depends_on: [analyst]
+    context_from: [gather, analyst]
+    tier: standard
+final_node: brief
