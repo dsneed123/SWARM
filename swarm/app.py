@@ -83,6 +83,7 @@ def build_app(settings: Settings | None = None, backend: ModelBackend | None = N
     file_handler = logging.FileHandler(ws.logs / "swarm.log")
     file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
     logging.getLogger().addHandler(file_handler)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     bus = EventBus()
     db = Database(ws.db)
     monitor = HardwareMonitor(interval_s=settings.hardware.sample_interval_s)

@@ -230,3 +230,12 @@ async def test_ollama_backend_roundtrip():
     import json
     assert json.loads(r2.content)["answer"] == 42
     await b.close()
+
+
+async def test_scheduler_falls_back_to_lower_tier_when_deep_cannot_fit(tmp_path):
+    sched, backend, _ = make_scheduler(tmp_path, total_gb=60, available_gb=30, parallel=1)
+    await sched.start()
+    async with await sched.acquire(ModelRequest(capability="synthesis", tier=Tier.DEEP), timeout_s=2) as lease:
+        assert lease.model != "large:70b"
+    assert any(e["type"] == "model.tier_fallback" for e in sched.bus.history)
+    await sched.stop()

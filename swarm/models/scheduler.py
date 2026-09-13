@@ -16,7 +16,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from swarm.config import Settings
@@ -222,13 +222,29 @@ class ModelScheduler:
         # Fail fast when no candidate could ever fit under the ceiling (as opposed to
         # not fitting right now); waiting would never help.
         usable = self.budget.view(sample).usable
-        possible = [c for c in cands if c.loaded or c.profile.estimate_memory(self._num_ctx_for(req, c.profile), self.parallel) <= usable]
-        if not possible:
+
+        def possible(cs: list[Candidate]) -> list[Candidate]:
+            return [c for c in cs if c.loaded or c.profile.estimate_memory(self._num_ctx_for(req, c.profile), self.parallel) <= usable]
+
+        fitting = possible(cands)
+        if not fitting and not req.model:
+            # Degrade to a lower tier that fits rather than fail: the task still gets
+            # the best model this machine can hold right now.
+            tier = req.tier
+            while not fitting and tier != tier.down():
+                tier = tier.down()
+                lower = self.router.candidates(replace(req, tier=tier), loaded=loaded, headroom=headroom,
+                                               num_ctx=req.min_context or self.default_ctx, parallel=self.parallel)
+                fitting = possible(lower)
+            if fitting:
+                self.bus.publish("model.tier_fallback", requested=req.tier.value, used=tier.value,
+                                 capability=req.capability, usable_gb=round(usable / 1024**3, 1))
+        if not fitting:
             need = min(c.profile.estimate_memory(self._num_ctx_for(req, c.profile), self.parallel) for c in cands)
             raise BackendError(
                 f"no model for {req.capability}/{req.tier.value} fits within the memory ceiling "
                 f"(needs ~{need / 1024**3:.0f} GB, usable {usable / 1024**3:.0f} GB); raise the ceiling or free memory")
-        cands = possible
+        cands = fitting
         # First pass: a resident candidate with a free slot and no big score gap.
         best = cands[0].score
         for c in cands:
