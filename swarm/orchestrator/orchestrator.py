@@ -35,7 +35,7 @@ from swarm.orchestrator.assist import CLARIFY_SCHEMA, Assistant, LLMGrouper, mak
 from swarm.orchestrator.consensus import ConsensusResult, evaluate_consensus
 from swarm.orchestrator.context import ContextBuilder
 from swarm.orchestrator.planner import Planner
-from swarm.orchestrator.recovery import Diagnosis, FailureContext, diagnose
+from swarm.orchestrator.recovery import FailureContext, diagnose
 from swarm.paths import Workspace
 from swarm.permissions.approvals import ApprovalBroker
 from swarm.permissions.policy import PermissionScope

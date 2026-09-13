@@ -56,7 +56,7 @@ class AgentScreen(Screen):
             f"model {escape(str(a.get('model') or 'waiting'))}  tier {a.get('tier') or 'auto'}  elapsed {dur(a.get('elapsed_s'))}  "
             f"tokens {a.get('prompt_tokens', 0)} in / {a.get('completion_tokens', 0)} out  memory share ≈ {gb(a.get('memory_share'))}",
             f"allowed tools: {', '.join(a.get('allowed_tools') or []) if a.get('allowed_tools') is not None else 'capability defaults'}  "
-            f"calls: {', '.join(f'{t['tool']}{'' if t['ok'] else '(failed)'}' for t in a.get('tool_uses') or []) or 'none'}",
+            "calls: " + (", ".join(t["tool"] + ("" if t["ok"] else "(failed)") for t in a.get("tool_uses") or []) or "none"),
         ]
         if a.get("error"):
             parts.append(f"[red]error ({a.get('error_kind')}):[/] {escape(str(a['error']))}")

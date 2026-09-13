@@ -10,7 +10,18 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
-from textual.widgets import Button, Checkbox, DataTable, Footer, Header, Input, Label, Select, Static, TextArea
+from textual.widgets import (
+    Button,
+    Checkbox,
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Label,
+    Select,
+    Static,
+    TextArea,
+)
 
 from swarm.tui.format import trunc
 from swarm.tui.screens.dashboard import _refill

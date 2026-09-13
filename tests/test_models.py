@@ -13,7 +13,7 @@ from swarm.core.types import Tier
 from swarm.hardware.budget import GB, ResourceBudget
 from swarm.hardware.telemetry import HardwareMonitor, HardwareSample
 from swarm.models.backend import ChatMessage
-from swarm.models.fake import FakeBackend, FakeModel
+from swarm.models.fake import FakeBackend
 from swarm.models.profiles import ProfileStore, assign_tiers
 from swarm.models.router import ModelRequest, ModelRouter
 from swarm.models.scheduler import ModelScheduler

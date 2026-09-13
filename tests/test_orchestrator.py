@@ -11,9 +11,7 @@ import json
 import re
 from typing import Any
 
-import pytest
-
-from swarm.core.types import ExecutionMode, NodeStatus, TaskStatus
+from swarm.core.types import ExecutionMode, TaskStatus
 from swarm.models.backend import ChatMessage
 from swarm.orchestrator.orchestrator import Orchestrator
 from tests.helpers import Harness, structured

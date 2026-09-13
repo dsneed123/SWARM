@@ -133,7 +133,7 @@ class Planner:
                 deps = [ids[d] for d in (raw.get("depends_on") or []) if d in ids and ids[d] != ids[str(raw.get("id") or f"n{i + 1}")]]
                 instr = str(raw.get("instruction") or "").strip()
                 if not instr:
-                    instr = f"Work on: {{objective}}"
+                    instr = "Work on: {objective}"
                 if "{objective}" not in instr:
                     instr += "\n\nObjective: {objective}"
                 nodes.append(NodeSpec(

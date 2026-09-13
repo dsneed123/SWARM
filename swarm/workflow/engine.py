@@ -70,7 +70,7 @@ class Engine:
                         t.cancel()
                     if running:
                         await asyncio.gather(*running.values(), return_exceptions=True)
-                    for nid, st in dag.states.items():
+                    for st in dag.states.values():
                         if not st.status.terminal:
                             st.status = NodeStatus.CANCELLED
                             st.finished_at = time.time()
