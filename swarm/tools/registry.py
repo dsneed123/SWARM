@@ -13,6 +13,7 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from swarm.core.events import EventBus
@@ -28,11 +29,22 @@ log = logging.getLogger(__name__)
 @dataclass
 class ToolContext:
     workspace: Workspace
+    project_dir: Path | None = None  # the user's directory for this task; None = workspace/files
     task_id: str | None = None
     node_id: str | None = None
     agent_id: str | None = None
     scope: PermissionScope = field(default_factory=PermissionScope)
     settings: Any = None
+
+    @property
+    def files_root(self) -> Path:
+        """Directory file and code tools are confined to."""
+        root = self.project_dir or self.workspace.files
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    def resolve(self, relative: str) -> Path:
+        return self.workspace.resolve_inside(self.files_root, relative)
 
 
 @dataclass

@@ -12,11 +12,12 @@ pip install -e .
 swarm
 ```
 
-That is the whole start-up: `swarm` launches the background service if it
-is not running and opens the dashboard. Press `n`, type what you want,
-Ctrl+S. `swarm stop` stops the service. If you would rather not use a
-full-screen view, `swarm prompt` gives a plain line prompt and
-`swarm ask "..."` answers one objective and exits.
+`swarm` opens a console (the msfconsole idea: a prompt, commands, tab
+completion) and starts the background service if it is not running. Type
+an objective and press Enter; `help` lists the commands. State lives in
+`~/.swarm`, so it behaves the same from any directory, and agents work on
+the files of the directory you launched it from. `swarm stop` stops the
+service; `swarm dashboard` is an optional full-screen view.
 
 ## What it does
 
@@ -55,7 +56,7 @@ full-screen view, `swarm prompt` gives a plain line prompt and
 - [Configuration](docs/configuration.md) — config file, environment, permissions
 - [Workflows](docs/workflows.md) — automatic plans and reusable YAML workflows
 - [Models and backends](docs/models.md) — tiers, routing, scheduling, profiles
-- [Dashboard and CLI](docs/tui.md) — screens, keys, and the plain command line
+- [Console and dashboard](docs/tui.md) — the prompt, its commands, and the optional full-screen view
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development](docs/development.md) — layout, tests, adding tools/backends
 

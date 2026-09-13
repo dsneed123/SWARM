@@ -1,29 +1,48 @@
-# Dashboard and command line
+# Console and dashboard
 
-`swarm` opens the dashboard (starting the service first if needed). It is
-deliberately plain: your terminal's colours, no boxes, colour only on
-things that need attention. Arrows and Tab move, Enter opens, Esc goes
-back, `?` lists every key.
-
-## The plain command line
-
-If you prefer not to have a full-screen view:
+`swarm` opens the console, starting the service first if needed.
 
 ```
-swarm prompt                     # a line prompt; type an objective, get the answer
-swarm ask "tallest mountain in Europe?"
-swarm run verified-research "..."
-swarm tasks | task <id> | status | models | workflows | permissions [profile]
-swarm stop
+  swarm  ·  local agent swarm on the GX10
+  8 models · backend ok · 40 GB usable · permissions normal · service · /home/you/.swarm
+  working directory /home/you/project
+
+swarm > what changed in python 3.13 garbage collection?
+swarm > use verified-research
+swarm (verified-research) > run is the GX10 faster than a 4090 for 70B inference?
+swarm > show models
+swarm > set memory 60
 ```
 
-Inside `swarm prompt`, slash commands do the rest: `/tasks`, `/task <id>`,
-`/status`, `/models`, `/memory 60`, `/permissions normal`, `/allow github`,
-`/deny shell`, `/workflows`, `/run <slug> <objective>`, `/mode interactive`,
-`/cancel <id>`, `/quit`. Approvals and questions are asked inline; Ctrl+C
-cancels the running objective.
+Anything that is not a command runs as an objective: a few progress lines
+per node (plan, models loaded, consensus verdicts, recoveries), then the
+answer with its sources, confidence, time and models used. Ctrl+C cancels
+the running objective. Questions from interactive tasks and tool
+approvals are asked inline.
 
-## Dashboard (`d`)
+Commands (`help` prints them; Tab completes them):
+
+| Command | What it does |
+| --- | --- |
+| `ask <text>` / `run <text>` | run an objective, plain or with the selected workflow |
+| `use <workflow>` / `use` / `back` | select a saved workflow (by name or from a numbered menu); the prompt shows it |
+| `show tasks` / `show task <id>` | task history; one task's nodes, consensus and notes, and its result |
+| `show models` / `show status` / `show workflows` / `show permissions` / `show events` | what is loaded and how the machine is doing |
+| `set memory 60` | memory ceiling in percent |
+| `set mode interactive` | default execution mode |
+| `set permissions safe` / `set tool shell deny` | permission profile and per-tool overrides |
+| `cancel` / `pause` / `resume <id>` | control a running task |
+| `approvals` / `answer <id> <text>` | answer pending approvals and questions |
+| `cd <dir>` | change the directory agents get for file and code tools |
+| `stop` / `exit` | stop the service / leave (the service keeps running) |
+
+One-shot forms exist for scripts: `swarm ask "..."`, `swarm tasks`,
+`swarm models`, `swarm status`, `swarm stop`.
+
+## Dashboard (`swarm dashboard`)
+
+An optional full-screen live view. Arrows and Tab move, Enter opens, Esc
+goes back, `?` lists every key.
 
 Two summary lines (memory, GPU, CPU, backend; swarm allocation vs target,
 loaded models, queue), then the task list (status, mode, progress

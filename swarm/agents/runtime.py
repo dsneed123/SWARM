@@ -105,6 +105,7 @@ class AgentSpec:
     think: bool | None = None
     max_tool_rounds: int | None = None
     role_label: str = ""  # human-friendly name for the TUI
+    project_dir: str | None = None  # where file/code tools operate for this task
     id: str = field(default_factory=lambda: new_id("agent"))
 
 
@@ -306,6 +307,8 @@ class AgentRuntime:
             if len(ctx_json) > budget_chars:
                 ctx_json = ctx_json[:budget_chars] + "\n…[context truncated by runtime]"
             parts.append(f"CONTEXT ARTIFACTS (from other agents; compact views):\n{ctx_json}")
+        if spec.project_dir and tool_names:
+            parts.append(f"WORKING DIRECTORY: {spec.project_dir} (file paths are relative to it)")
         if spec.context_text:
             text = spec.context_text
             remaining = max(1000, budget_chars - sum(len(p) for p in parts))
@@ -327,7 +330,10 @@ class AgentRuntime:
         temperature: float, think: bool | None, max_rounds: int,
     ) -> list[ChatMessage]:
         specs = self.tools.specs(tool_names)
-        ctx = ToolContext(workspace=self.workspace, task_id=agent.spec.task_id, node_id=agent.spec.node_id,
+        from pathlib import Path
+
+        ctx = ToolContext(workspace=self.workspace, project_dir=Path(agent.spec.project_dir) if agent.spec.project_dir else None,
+                          task_id=agent.spec.task_id, node_id=agent.spec.node_id,
                           agent_id=agent.id, scope=agent.spec.scope, settings=self.settings)
         for _ in range(max_rounds):
             result = await self._chat(agent, lease, messages, tools=specs, temperature=temperature, think=think)

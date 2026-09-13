@@ -126,3 +126,21 @@ async def test_web_tools_live(tmp_path):
     assert r.ok and r.data["results"]
     r = await reg.invoke("web_fetch", {"url": "https://docs.python.org/3/library/asyncio.html"}, ctx)
     assert r.ok and "asyncio" in r.output.lower() and r.sources[0]["retrieved_at"]
+
+
+async def test_file_tools_use_project_directory(tmp_path):
+    from pathlib import Path
+
+    reg, approvals, bus, ctx = make_registry(tmp_path, "normal")
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / "notes.md").write_text("hello project")
+    ctx.project_dir = project
+    r = await reg.invoke("read_file", {"path": "notes.md"}, ctx)
+    assert r.ok and r.output == "hello project"
+    r = await reg.invoke("write_file", {"path": "out/x.txt", "content": "y"}, ctx)
+    assert r.ok and (project / "out" / "x.txt").read_text() == "y"
+    r = await reg.invoke("read_file", {"path": "../../etc/passwd"}, ctx)
+    assert not r.ok
+    r = await reg.invoke("python", {"code": "import os; print(os.getcwd())"}, ctx)
+    assert r.ok and str(Path(project).resolve()) in r.output

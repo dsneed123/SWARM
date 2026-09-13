@@ -1,8 +1,8 @@
 """Settings for the whole system.
 
 Precedence (highest first): explicit overrides, environment variables prefixed
-``SWARM_``, ``config.yaml`` in the workspace root, built-in defaults. A
-``.env`` file next to the repo root is loaded into the environment if present.
+``SWARM_``, ``config.yaml`` in the workspace root, built-in defaults. ``.env``
+files in the repo root and in ``~/.swarm`` are loaded into the environment.
 Nothing machine-specific lives in the repository; see ``config.example.yaml``.
 """
 
@@ -100,7 +100,7 @@ class ServiceConfig(BaseModel):
 
 
 class Settings(BaseModel):
-    workspace: Path = Field(default_factory=lambda: Path.cwd() / "workspace")
+    workspace: Path = Field(default_factory=lambda: default_home())
     ollama: OllamaConfig = Field(default_factory=OllamaConfig)
     hardware: HardwareConfig = Field(default_factory=HardwareConfig)
     tiers: TierConfig = Field(default_factory=TierConfig)
@@ -147,6 +147,12 @@ _ENV_MAP: dict[str, tuple[str, ...]] = {
 }
 
 
+def default_home() -> Path:
+    """Where state lives when nothing else is configured: ~/.swarm.
+    The same from every directory, so `swarm` behaves identically wherever it is run."""
+    return Path(os.environ.get("SWARM_HOME") or Path.home() / ".swarm")
+
+
 def _set_path(data: dict[str, Any], path: tuple[str, ...], value: Any) -> None:
     cur = data
     for key in path[:-1]:
@@ -169,9 +175,10 @@ def load_settings(
 ) -> Settings:
     repo_root = Path(__file__).resolve().parent.parent
     _load_dotenv(repo_root / ".env")
+    _load_dotenv(default_home() / ".env")
 
     data: dict[str, Any] = {}
-    ws = Path(workspace or os.environ.get("SWARM_WORKSPACE") or repo_root / "workspace")
+    ws = Path(workspace or os.environ.get("SWARM_WORKSPACE") or default_home()).expanduser()
     data["workspace"] = str(ws)
 
     cfg_file = ws / "config.yaml"

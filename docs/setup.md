@@ -23,7 +23,7 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[gpu,dev]"
 ```
 
-Copy `.env.example` to `.env` if your Ollama does not listen on
+Copy `.env.example` to `.env` (in the repo, or in `~/.swarm/.env`) if your Ollama does not listen on
 `localhost:11434` (for example when the service has `OLLAMA_HOST` set to a
 LAN or Tailscale address):
 
@@ -38,23 +38,28 @@ swarm
 ```
 
 `swarm` starts the service in the background when none is running (its
-log goes to `workspace/logs/service.log`) and opens the dashboard. Quitting
-the dashboard leaves the service, its loaded models and running tasks in
+log goes to `~/.swarm/logs/service.log`) and opens the console. Quitting
+the console leaves the service, its loaded models and running tasks in
 place; `swarm stop` shuts it down, `swarm status` tells you whether it is up.
+
+To have `swarm` on your PATH from any directory, either install with
+`pipx install .` or link the venv script: `ln -s $PWD/.venv/bin/swarm ~/.local/bin/swarm`.
 
 Other entry points:
 
-- `swarm prompt` — line-based prompt instead of the dashboard.
 - `swarm ask "objective"` — one objective, prints the answer and exits.
+- `swarm run <workflow> "objective"` — the same with a saved workflow.
 - `swarm tasks`, `swarm task <id>`, `swarm models`, `swarm workflows`,
-  `swarm permissions [profile]` — read-only views.
-- `swarm serve` — run the service in the foreground (what the systemd unit
-  does).
+  `swarm permissions [profile]` — read-only views; they never start the service.
+- `swarm dashboard` — full-screen live view.
+- `swarm serve` — run the service in the foreground (what the systemd unit does).
 - `swarm --demo` — fake backend, no Ollama, for a look around.
 
-The workspace defaults to `./workspace` (override with `--workspace` or
-`SWARM_WORKSPACE`). It holds the config, socket, SQLite state, artifacts,
-saved workflows, the sandboxed `files/` directory agents may use, and logs.
+State lives in `~/.swarm` (override with `SWARM_HOME`, `SWARM_WORKSPACE` or
+`--workspace`): config, socket, SQLite state, artifacts, saved workflows,
+logs, and a `files/` directory. File and code tools operate on the
+directory you launched `swarm` from (`cd` inside the console changes it),
+confined to that directory.
 
 ## Run as a systemd user service
 

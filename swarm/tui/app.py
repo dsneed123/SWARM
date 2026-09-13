@@ -207,7 +207,7 @@ class SwarmApp(App[None]):
         async def done(result: dict[str, Any] | None) -> None:
             if not result:
                 return
-            brief = await self.call("submit", **result)
+            brief = await self.call("submit", cwd=os.getcwd(), **result)
             if brief:
                 self.notify(f"submitted {brief['id']}")
                 await self.refresh_snapshot()

@@ -1,4 +1,4 @@
-"""Code execution tools. Both run as subprocesses inside the workspace files
+"""Code execution tools. Both run as subprocesses inside the task's working
 directory with a timeout and a reduced environment."""
 
 from __future__ import annotations
@@ -54,8 +54,7 @@ class PythonTool(Tool):
         if not code.strip():
             return ToolResult(ok=False, error="empty code")
         timeout = min(float(args.get("timeout_s") or 120), self.timeout_s - 5)
-        ctx.workspace.files.mkdir(parents=True, exist_ok=True)
-        return await _run_subprocess([sys.executable, "-I", "-"], str(ctx.workspace.files), timeout, stdin=code)
+        return await _run_subprocess([sys.executable, "-I", "-"], str(ctx.files_root), timeout, stdin=code)
 
 
 class ShellTool(Tool):
@@ -75,5 +74,4 @@ class ShellTool(Tool):
         if not cmd.strip():
             return ToolResult(ok=False, error="empty command")
         timeout = min(float(args.get("timeout_s") or 120), self.timeout_s - 5)
-        ctx.workspace.files.mkdir(parents=True, exist_ok=True)
-        return await _run_subprocess(["bash", "-lc", cmd], str(ctx.workspace.files), timeout)
+        return await _run_subprocess(["bash", "-lc", cmd], str(ctx.files_root), timeout)

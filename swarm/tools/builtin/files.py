@@ -1,5 +1,6 @@
-"""Sandboxed file access. Paths are relative to ``workspace/files`` and
-anything that resolves outside it is refused."""
+"""Sandboxed file access. Paths are relative to the task's project directory
+(where the user launched swarm) or ``workspace/files``; anything resolving
+outside is refused."""
 
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ from swarm.tools.registry import Tool, ToolContext, ToolResult
 
 class ReadFileTool(Tool):
     name = "read_file"
-    description = "Read a text file from the swarm workspace. Path is relative to the workspace files directory."
+    description = "Read a text file. Paths are relative to the working directory of the task."
     parameters = {
         "type": "object",
         "properties": {"path": {"type": "string"}, "max_chars": {"type": "integer"}},
@@ -20,7 +21,7 @@ class ReadFileTool(Tool):
     category = "read"
 
     async def run(self, args: dict[str, Any], ctx: ToolContext) -> ToolResult:
-        path = ctx.workspace.resolve_inside(ctx.workspace.files, str(args["path"]))
+        path = ctx.resolve(str(args["path"]))
         if not path.is_file():
             return ToolResult(ok=False, error=f"not a file: {args['path']}")
         limit = int(args.get("max_chars") or 20000)
@@ -35,7 +36,7 @@ class ReadFileTool(Tool):
 
 class WriteFileTool(Tool):
     name = "write_file"
-    description = "Write a text file inside the swarm workspace (creates parent directories)."
+    description = "Write a text file in the working directory of the task (creates parent directories)."
     parameters = {
         "type": "object",
         "properties": {"path": {"type": "string"}, "content": {"type": "string"}, "append": {"type": "boolean"}},
@@ -45,7 +46,7 @@ class WriteFileTool(Tool):
     side_effects = True
 
     async def run(self, args: dict[str, Any], ctx: ToolContext) -> ToolResult:
-        path = ctx.workspace.resolve_inside(ctx.workspace.files, str(args["path"]))
+        path = ctx.resolve(str(args["path"]))
         path.parent.mkdir(parents=True, exist_ok=True)
         content = str(args.get("content", ""))
         if args.get("append"):
@@ -58,15 +59,15 @@ class WriteFileTool(Tool):
 
 class ListFilesTool(Tool):
     name = "list_files"
-    description = "List files in a workspace directory (relative path, default root)."
+    description = "List files in the working directory of the task (relative path, default root)."
     parameters = {"type": "object", "properties": {"path": {"type": "string"}}}
     category = "read"
 
     async def run(self, args: dict[str, Any], ctx: ToolContext) -> ToolResult:
         rel = str(args.get("path") or ".")
-        path = ctx.workspace.resolve_inside(ctx.workspace.files, rel)
+        path = ctx.resolve(rel)
         if not path.is_dir():
             return ToolResult(ok=False, error=f"not a directory: {rel}")
         entries = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name))
-        lines = [f"{'d' if p.is_dir() else 'f'} {p.relative_to(ctx.workspace.files)} {p.stat().st_size if p.is_file() else ''}" for p in entries[:500]]
+        lines = [f"{'d' if p.is_dir() else 'f'} {p.relative_to(ctx.files_root)} {p.stat().st_size if p.is_file() else ''}" for p in entries[:500]]
         return ToolResult(ok=True, output="\n".join(lines) or "(empty)", data={"count": len(entries)})

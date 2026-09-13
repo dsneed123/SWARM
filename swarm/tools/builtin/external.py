@@ -94,7 +94,7 @@ class GitHubTool(Tool):
         if head not in _GH_READ and head not in _GH_WRITE and argv[0] not in ("repo", "issue", "pr", "search", "release", "run"):
             return ToolResult(ok=False, error=f"gh {head!r} is not on the allowed list")
         proc = await asyncio.create_subprocess_exec(
-            "gh", *argv, cwd=str(ctx.workspace.files), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            "gh", *argv, cwd=str(ctx.files_root), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
         out, err = await proc.communicate()
         o, e = out.decode(errors="replace"), err.decode(errors="replace")

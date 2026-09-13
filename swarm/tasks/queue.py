@@ -48,6 +48,7 @@ class Task(BaseModel):
     interventions: list[dict[str, Any]] = Field(default_factory=list)  # manual actions by the user
     node_states: dict[str, Any] = Field(default_factory=dict)  # snapshot for persistence/history
     overrides: dict[str, Any] = Field(default_factory=dict)  # e.g. {"tier": "deep", "redundancy": 3}
+    cwd: str | None = None  # directory the user launched from; file tools work there
     models_used: list[str] = Field(default_factory=list)
     summary: str = ""
 
@@ -81,6 +82,7 @@ class Task(BaseModel):
             "pending_question": self.pending_question().model_dump() if self.pending_question() else None,
             "nodes": len(self.spec.nodes) if self.spec else 0,
             "summary": self.summary,
+            "cwd": self.cwd,
         }
 
 

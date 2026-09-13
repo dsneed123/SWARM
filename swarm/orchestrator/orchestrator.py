@@ -157,12 +157,12 @@ class Orchestrator:
     # --- public API -----------------------------------------------------
 
     def submit(self, objective: str, *, mode: ExecutionMode | None = None, workflow: str | None = None,
-               overrides: dict[str, Any] | None = None, priority: int = 0) -> Task:
+               overrides: dict[str, Any] | None = None, priority: int = 0, cwd: str | None = None) -> Task:
         objective = objective.strip()
         if not objective:
             raise ValueError("objective is empty")
         task = Task(objective=objective, mode=mode or self.settings.orchestrator.default_mode,
-                    workflow_slug=workflow, overrides=overrides or {}, priority=priority)
+                    workflow_slug=workflow, overrides=overrides or {}, priority=priority, cwd=cwd)
         if workflow:
             spec = self.workflows.load(workflow)  # raises if missing
             task.objective_class = spec.objective_class
@@ -514,6 +514,7 @@ class Orchestrator:
                     exclude_models=set(exclude) | {m for m in models[:i] if m} if node.independent_models else set(exclude),
                     scope=self._scope(run, node), think=node.think, max_tool_rounds=node.max_tool_rounds,
                     role_label=f"{node.label}" + (f" #{i + 1}" if redundancy > 1 else ""),
+                    project_dir=task.cwd,
                 )
                 for i in range(redundancy)
             ]
@@ -661,7 +662,7 @@ class Orchestrator:
                     tier=extra_tier, model=None, tools=node.tools, context=context, context_text=context_text,
                     input_artifact_ids=used_ids, attempt=round_ + 1, time_budget_s=node.time_budget_s or self.settings.orchestrator.node_timeout_s,
                     exclude_models=used_models | exclude, scope=self._scope(run, node), think=node.think,
-                    role_label=f"{node.label} extra #{extra_used + i + 1}",
+                    role_label=f"{node.label} extra #{extra_used + i + 1}", project_dir=run.task.cwd,
                 )
                 for i in range(n_extra)
             ]

@@ -71,9 +71,9 @@ class Api:
     # --- tasks ------------------------------------------------------------
 
     def m_submit(self, objective: str, mode: str | None = None, workflow: str | None = None,
-                 overrides: dict[str, Any] | None = None, priority: int = 0) -> dict[str, Any]:
+                 overrides: dict[str, Any] | None = None, priority: int = 0, cwd: str | None = None) -> dict[str, Any]:
         task = self.app.orchestrator.submit(objective, mode=ExecutionMode(mode) if mode else None, workflow=workflow,
-                                            overrides=overrides, priority=priority)
+                                            overrides=overrides, priority=priority, cwd=cwd)
         return task.brief()
 
     def m_pause(self, task_id: str) -> bool:

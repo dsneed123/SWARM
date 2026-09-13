@@ -83,9 +83,9 @@ class Runner:
         self.verbose = verbose
 
     async def run(self, objective: str, *, mode: str | None = None, workflow: str | None = None,
-                  overrides: dict[str, Any] | None = None) -> dict[str, Any] | None:
+                  overrides: dict[str, Any] | None = None, cwd: str | None = None) -> dict[str, Any] | None:
         brief = await self.client.call("submit", {"objective": objective, "mode": mode, "workflow": workflow,
-                                                  "overrides": overrides or {}})
+                                                  "overrides": overrides or {}, "cwd": cwd or os.getcwd()})
         tid = brief["id"]
         out(dim(f"task {tid} queued"))
         t0 = time.time()
