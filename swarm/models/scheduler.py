@@ -219,6 +219,16 @@ class ModelScheduler:
         if not cands:
             raise BackendError(f"no installed model can serve {req.capability}/{req.tier.value}"
                                + (f" (pinned {req.model})" if req.model else ""))
+        # Fail fast when no candidate could ever fit under the ceiling (as opposed to
+        # not fitting right now); waiting would never help.
+        usable = self.budget.view(sample).usable
+        possible = [c for c in cands if c.loaded or c.profile.estimate_memory(self._num_ctx_for(req, c.profile), self.parallel) <= usable]
+        if not possible:
+            need = min(c.profile.estimate_memory(self._num_ctx_for(req, c.profile), self.parallel) for c in cands)
+            raise BackendError(
+                f"no model for {req.capability}/{req.tier.value} fits within the memory ceiling "
+                f"(needs ~{need / 1024**3:.0f} GB, usable {usable / 1024**3:.0f} GB); raise the ceiling or free memory")
+        cands = possible
         # First pass: a resident candidate with a free slot and no big score gap.
         best = cands[0].score
         for c in cands:

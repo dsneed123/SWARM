@@ -44,7 +44,7 @@ class NodeSpec(BaseModel):
     context_from: list[str] | None = None  # None = every dependency
     include_objective: bool = True
     time_budget_s: float | None = None
-    max_attempts: int = Field(2, ge=1, le=6)
+    max_attempts: int = Field(3, ge=1, le=6)
     critical: bool = True
     think: bool | None = None
     temperature: float | None = None

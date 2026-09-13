@@ -160,11 +160,29 @@ async def test_scheduler_evicts_idle_to_fit(tmp_path):
     await sched.stop()
 
 
-async def test_scheduler_waits_when_nothing_fits(tmp_path):
+async def test_scheduler_fails_fast_when_model_can_never_fit(tmp_path):
     sched, backend, _ = make_scheduler(tmp_path, total_gb=60, available_gb=20, parallel=1)
     await sched.start()
-    with pytest.raises(TimeoutError):
+    from swarm.models.backend import BackendError
+
+    with pytest.raises(BackendError, match="memory ceiling"):
         await sched.acquire(ModelRequest(capability="x", model="large:70b"), timeout_s=0.3)
+    await sched.stop()
+
+
+async def test_scheduler_waits_when_busy_instance_will_free_up(tmp_path):
+    # One slot per instance: the second request must wait for the first call to finish, not load a copy.
+    sched, backend, _ = make_scheduler(tmp_path, parallel=1)
+    backend.models["small:7b"].latency_s = 0.2
+    await sched.start()
+    req = ModelRequest(capability="x", tier=Tier.FAST)
+
+    async def worker():
+        async with await sched.acquire(req, timeout_s=5) as lease:
+            await lease.chat([ChatMessage("user", "hi")])
+
+    await asyncio.gather(worker(), worker())
+    assert backend.load_events.count(("load", "small:7b")) == 1 and backend.max_active["small:7b"] == 1
     await sched.stop()
 
 

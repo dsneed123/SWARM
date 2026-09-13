@@ -144,6 +144,15 @@ class FakeBackend(ModelBackend):
         )
 
 
+def small_models() -> list[FakeModel]:
+    """Tiny footprints for tests that run against the real hardware monitor."""
+    return [
+        FakeModel("tiny:1b", 1, 0.8),
+        FakeModel("small:3b", 3, 2.0),
+        FakeModel("mid:7b", 7, 4.5, capabilities={"completion", "tools", "thinking"}),
+    ]
+
+
 def default_models() -> list[FakeModel]:
     return [
         FakeModel("small:7b", 7, 4.5),

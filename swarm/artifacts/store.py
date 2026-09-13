@@ -125,6 +125,24 @@ class ArtifactStore:
             stack.extend(a.parents)
         return out
 
+    def ancestry(self, artifact_id: str, limit: int = 200) -> list[Artifact]:
+        """Everything that fed into an artifact: parents and provenance inputs, transitively."""
+        out: list[Artifact] = []
+        seen: set[str] = set()
+        stack = [artifact_id]
+        while stack and len(out) < limit:
+            cur = stack.pop()
+            if cur in seen:
+                continue
+            seen.add(cur)
+            a = self.get(cur)
+            if a is None:
+                continue
+            out.append(a)
+            stack.extend(a.parents)
+            stack.extend(a.provenance.inputs)
+        return out
+
     def count(self, task_id: str | None = None) -> int:
         with self._lock:
             if task_id:
