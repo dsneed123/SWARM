@@ -106,7 +106,7 @@ class ModelRouter:
             reasons.append("specialty match")
         elif "coding" in p.specialties and req.capability not in ("coding", "tool_use", "data"):
             # A code-tuned model should not win general work just because it is resident.
-            score -= 0.5
+            score -= 0.7
             reasons.append("code-specialised model for non-code work")
         if req.capability in REASONING_CAPABILITIES and p.supports_thinking():
             score += 0.15

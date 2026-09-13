@@ -127,6 +127,8 @@ class Planner:
                     cap = "general"
                 tier = _tier(raw.get("tier"))
                 red = int(raw.get("redundancy") or 1)
+                if data.get("accuracy_critical") and cap in ("research", "verification") and red < 2:
+                    red = 2  # facts must be right: never rely on a single agent
                 red = max(1, min(self.max_redundancy, red))
                 deps = [ids[d] for d in (raw.get("depends_on") or []) if d in ids and ids[d] != ids[str(raw.get("id") or f"n{i + 1}")]]
                 instr = str(raw.get("instruction") or "").strip()

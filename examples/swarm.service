@@ -1,0 +1,18 @@
+# systemd user unit for the swarm service.
+# Install: cp examples/swarm.service ~/.config/systemd/user/ && systemctl --user enable --now swarm
+[Unit]
+Description=SWARM local agent swarm service
+After=network.target ollama.service
+
+[Service]
+Type=simple
+WorkingDirectory=%h/SWARM
+Environment=SWARM_WORKSPACE=%h/SWARM/workspace
+# Set if Ollama is not on localhost:
+# Environment=SWARM_OLLAMA_HOST=http://127.0.0.1:11434
+ExecStart=%h/SWARM/.venv/bin/swarm serve
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

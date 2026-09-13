@@ -1,0 +1,45 @@
+# Copy to workspace/config.yaml. Every key is optional.
+ollama:
+  host: http://localhost:11434
+  request_timeout_s: 600
+  num_parallel: 4          # match OLLAMA_NUM_PARALLEL on the Ollama service
+  keep_alive: 30m
+
+hardware:
+  memory_ceiling_percent: 70   # upper operating boundary for the swarm, % of total memory
+  safety_reserve_gb: 4
+  sample_interval_s: 1.0
+  max_concurrent_inference: 0  # 0 = derived from loaded instances x num_parallel
+
+tiers:                          # optional pins; otherwise assigned by parameter count
+  fast: null
+  standard: null
+  deep: null
+
+orchestrator:
+  tier: fast
+  escalation_tier: deep
+  default_mode: autonomous      # or interactive
+  task_soft_timeout_s: 1800
+  task_hard_timeout_s: 7200
+  node_timeout_s: 900
+  max_redundancy: 5
+  max_consensus_rounds: 3
+  agent_context_tokens: 6000
+  cite_sources: true
+
+permissions:
+  profile: normal               # safe | normal | autonomous
+  overrides: {}                 # e.g. {github: allow, shell: deny}
+  ask_timeout_s: 600
+
+search:
+  searxng_url: null
+  user_agent: swarm-local-agent/0.1
+  max_results: 8
+  fetch_max_chars: 12000
+
+service:
+  socket: swarm.sock
+
+log_level: INFO
