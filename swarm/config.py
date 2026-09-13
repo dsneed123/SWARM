@@ -112,8 +112,17 @@ class Settings(BaseModel):
 
     @property
     def socket_path(self) -> Path:
+        """Socket location. AF_UNIX paths are limited to ~108 bytes, so a deep
+        workspace falls back to the runtime dir (or /tmp) keyed by workspace hash."""
         p = Path(self.service.socket)
-        return p if p.is_absolute() else self.workspace / p
+        p = p if p.is_absolute() else self.workspace / p
+        if len(str(p).encode()) < 100:
+            return p
+        import hashlib
+
+        digest = hashlib.sha256(str(self.workspace).encode()).hexdigest()[:10]
+        base = Path(os.environ.get("XDG_RUNTIME_DIR") or "/tmp")
+        return base / f"swarm-{digest}.sock"
 
     def save(self, path: Path | None = None) -> Path:
         path = path or self.workspace / "config.yaml"

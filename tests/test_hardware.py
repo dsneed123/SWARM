@@ -63,3 +63,12 @@ def test_monitor_reads_gb10_gpu():
     assert s.gpu_name and "GB10" in s.gpu_name
     assert s.gpu_util is not None and s.gpu_temp_c is not None
     assert m.info.unified_memory
+
+
+def test_socket_path_falls_back_when_too_long(tmp_path):
+    from swarm.config import Settings
+
+    short = Settings(workspace=tmp_path)
+    assert short.socket_path == tmp_path / "swarm.sock"
+    deep = Settings(workspace=tmp_path / ("x" * 120))
+    assert deep.socket_path.name.startswith("swarm-") and len(str(deep.socket_path).encode()) < 100

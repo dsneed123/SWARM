@@ -505,5 +505,6 @@ class ModelScheduler:
                     "specialties": p.specialties,
                 }
                 for p in sorted(self.profiles.all(), key=lambda p: p.parameters_b)
+                if p.is_chat_model
             ],
         }
