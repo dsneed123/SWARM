@@ -8,18 +8,18 @@ from rich.markup import escape
 
 GB = 1024**3
 
+# Colour only where attention is needed; everything else is plain or dim.
 STATUS_STYLE = {
-    "queued": "dim", "planning": "yellow", "running": "cyan", "paused": "magenta", "waiting_user": "bold yellow",
-    "completed": "green", "failed": "red", "cancelled": "dim red", "pending": "dim", "ready": "dim cyan",
-    "consensus": "blue", "skipped": "dim yellow", "created": "dim", "waiting_model": "yellow", "tool_call": "blue",
-    "waiting_approval": "bold yellow", "loading": "yellow", "unloading": "dim", "converged": "green",
-    "disagreement": "red", "weak": "yellow", "single": "dim",
+    "failed": "red", "cancelled": "dim", "waiting_user": "yellow", "waiting_approval": "yellow",
+    "disagreement": "yellow", "weak": "yellow", "completed": "dim", "skipped": "dim", "queued": "dim",
+    "pending": "dim", "ready": "dim", "created": "dim",
 }
 
 
 def status(s: str | None) -> str:
     s = s or "-"
-    return f"[{STATUS_STYLE.get(s, 'white')}]{escape(s)}[/]"
+    style = STATUS_STYLE.get(s)
+    return f"[{style}]{escape(s)}[/]" if style else escape(s)
 
 
 def gb(n: int | float | None, digits: int = 1) -> str:
@@ -56,14 +56,5 @@ def trunc(text: str | None, n: int) -> str:
     return escape(text if len(text) <= n else text[: n - 1] + "…")
 
 
-def bar(fraction: float, width: int = 20, color: str = "green") -> str:
-    fraction = max(0.0, min(1.0, fraction))
-    filled = int(round(fraction * width))
-    return f"[{color}]{'█' * filled}[/][dim]{'░' * (width - filled)}[/]"
-
-
 def conf(c: float | None) -> str:
-    if c is None:
-        return "-"
-    color = "green" if c >= 0.75 else "yellow" if c >= 0.5 else "red"
-    return f"[{color}]{c:.2f}[/]"
+    return "-" if c is None else f"{c:.2f}"

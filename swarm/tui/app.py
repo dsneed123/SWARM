@@ -35,19 +35,21 @@ class SwarmApp(App[None]):
     TITLE = "SWARM"
     CSS = """
     Screen { layout: vertical; }
-    #dialog { width: 90%; max-width: 120; height: auto; max-height: 90%; border: thick $accent; background: $surface; padding: 1 2; }
+    #dialog { width: 90%; max-width: 110; height: auto; max-height: 90%; background: $surface; padding: 1 2; border: solid $foreground 30%; }
     #dialog TextArea { height: 8; }
     #dialog Horizontal { height: auto; margin-top: 1; }
     #dialog Input { width: 12; }
     #dialog Select { width: 32; }
-    .panel { border: round $primary; padding: 0 1; height: 1fr; }
-    .panel-title { text-style: bold; color: $accent; }
+    .title { text-style: bold; height: 1; padding: 0 1; }
+    .panel { padding: 0 1; height: 1fr; }
+    .panel-title { color: $foreground 60%; height: 1; }
     DataTable { height: 1fr; }
-    HardwarePanel { height: 6; border: round $secondary; padding: 0 1; }
-    EventLog { height: 1fr; border: round $secondary; padding: 0 1; }
+    DataTable > .datatable--header { text-style: none; color: $foreground 60%; background: transparent; }
+    HardwarePanel { height: 2; padding: 0 1; color: $foreground 80%; }
+    EventLog { height: 1fr; padding: 0 1; }
     .row { height: 1fr; }
     .half { width: 1fr; }
-    .detail { height: auto; max-height: 40%; border: round $secondary; padding: 0 1; }
+    .detail { height: auto; max-height: 40%; padding: 0 1; }
     """
     BINDINGS = [
         Binding("n", "new_task", "New"),
@@ -63,6 +65,7 @@ class SwarmApp(App[None]):
 
     def __init__(self, client: LocalClient | SocketClient, mode_label: str, on_exit=None) -> None:
         super().__init__()
+        self.theme = "ansi-dark"
         self.client = client
         self.mode_label = mode_label
         self.snapshot: dict[str, Any] = {}
@@ -223,17 +226,55 @@ class SwarmApp(App[None]):
         self.push_screen(HelpModal())
 
 
+async def _try_socket(sock: str) -> SocketClient | None:
+    client = SocketClient(sock)
+    try:
+        await client.connect()
+        return client
+    except (ConnectionRefusedError, FileNotFoundError, OSError):
+        return None
+
+
+async def _start_service(settings) -> str | None:
+    """Launch `swarm serve` detached; return an error message if it did not come up."""
+    import subprocess
+    import sys
+
+    from swarm.paths import Workspace
+
+    ws = Workspace(settings.workspace).ensure()
+    log_file = open(ws.logs / "service.log", "ab")  # noqa: SIM115 - handed to the child
+    subprocess.Popen(
+        [sys.executable, "-m", "swarm", "--workspace", str(settings.workspace), "serve"],
+        stdout=log_file, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True,
+    )
+    sock = str(settings.socket_path)
+    for _ in range(100):
+        await asyncio.sleep(0.2)
+        if os.path.exists(sock):
+            return None
+    return f"service did not start; see {ws.logs / 'service.log'}"
+
+
 async def _connect(workspace: str | None, embedded: bool, demo: bool):
     """Return (client, label, on_exit)."""
     settings = load_settings(workspace)
     sock = str(settings.socket_path)
-    if not embedded and not demo and os.path.exists(sock):
-        client = SocketClient(sock)
-        try:
-            await client.connect()
-            return client, f"service @ {sock}", None
-        except (ConnectionRefusedError, FileNotFoundError, OSError):
-            pass
+    if not embedded and not demo:
+        client = await _try_socket(sock)
+        if client is None:
+            print("starting the swarm service in the background…", flush=True)
+            err = await _start_service(settings)
+            if err is None:
+                for _ in range(25):
+                    client = await _try_socket(sock)
+                    if client is not None:
+                        break
+                    await asyncio.sleep(0.2)
+            if client is None:
+                print(err or "could not connect to the service; running embedded", flush=True)
+        if client is not None:
+            return client, "service", None
     from swarm.app import build_app
     from swarm.service.api import Api
 
@@ -250,7 +291,7 @@ async def _connect(workspace: str | None, embedded: bool, demo: bool):
     app = build_app(settings, backend=backend)
     await app.start()
     client = LocalClient(Api(app))
-    label = "embedded (no service running)" if not demo else "demo (fake backend)"
+    label = "embedded" if not demo else "demo"
     return client, label, app.stop
 
 

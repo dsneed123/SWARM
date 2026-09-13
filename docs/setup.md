@@ -33,16 +33,24 @@ SWARM_OLLAMA_HOST=http://<host>:11434
 
 ## Run
 
-Two processes: the service (engine) and the control center (TUI).
-
 ```
-swarm serve      # engine; keeps models, tasks and memory alive
-swarm            # TUI; connects over workspace/swarm.sock
+swarm
 ```
 
-If no service is running, `swarm` starts the engine in-process ("embedded")
-so you can still use it; everything stops when you quit. `swarm tui --demo`
-runs with a fake backend and no Ollama, useful for exploring the interface.
+`swarm` starts the service in the background when none is running (its
+log goes to `workspace/logs/service.log`) and opens the dashboard. Quitting
+the dashboard leaves the service, its loaded models and running tasks in
+place; `swarm stop` shuts it down, `swarm status` tells you whether it is up.
+
+Other entry points:
+
+- `swarm prompt` — line-based prompt instead of the dashboard.
+- `swarm ask "objective"` — one objective, prints the answer and exits.
+- `swarm tasks`, `swarm task <id>`, `swarm models`, `swarm workflows`,
+  `swarm permissions [profile]` — read-only views.
+- `swarm serve` — run the service in the foreground (what the systemd unit
+  does).
+- `swarm --demo` — fake backend, no Ollama, for a look around.
 
 The workspace defaults to `./workspace` (override with `--workspace` or
 `SWARM_WORKSPACE`). It holds the config, socket, SQLite state, artifacts,

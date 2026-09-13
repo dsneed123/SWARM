@@ -9,12 +9,14 @@ and controllable from a keyboard-driven terminal dashboard.
 
 ```
 pip install -e .
-swarm serve          # in one terminal (or install the systemd unit)
-swarm                # the control center, in another
+swarm
 ```
 
-Press `n`, type what you want, press Ctrl+S. Watch the DAG, the agents, the
-models and the memory budget live. Press `?` for keys.
+That is the whole start-up: `swarm` launches the background service if it
+is not running and opens the dashboard. Press `n`, type what you want,
+Ctrl+S. `swarm stop` stops the service. If you would rather not use a
+full-screen view, `swarm prompt` gives a plain line prompt and
+`swarm ask "..."` answers one objective and exits.
 
 ## What it does
 
@@ -53,7 +55,7 @@ models and the memory budget live. Press `?` for keys.
 - [Configuration](docs/configuration.md) — config file, environment, permissions
 - [Workflows](docs/workflows.md) — automatic plans and reusable YAML workflows
 - [Models and backends](docs/models.md) — tiers, routing, scheduling, profiles
-- [The TUI](docs/tui.md) — screens and keys
+- [Dashboard and CLI](docs/tui.md) — screens, keys, and the plain command line
 - [Troubleshooting](docs/troubleshooting.md)
 - [Development](docs/development.md) — layout, tests, adding tools/backends
 

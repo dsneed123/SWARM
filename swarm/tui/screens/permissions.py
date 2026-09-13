@@ -8,7 +8,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Static
 
 from swarm.tui.format import trunc
 from swarm.tui.screens.dashboard import _refill
@@ -29,11 +29,11 @@ class PermissionsScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("permissions", classes="title")
         yield Static(id="profile", classes="detail")
         with Vertical(classes="panel"):
             yield Static("Tools  (a allow · s ask · d deny · x clear override · 1/2/3 profile)", classes="panel-title")
-            yield DataTable(id="tools", cursor_type="row", zebra_stripes=True)
+            yield DataTable(id="tools", cursor_type="row")
         yield Footer()
 
     def on_mount(self) -> None:

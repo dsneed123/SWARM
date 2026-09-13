@@ -9,9 +9,9 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Static
 
-from swarm.tui.format import bar, dur, gb, pct, status
+from swarm.tui.format import dur, gb, pct, status
 from swarm.tui.screens.dashboard import _refill
 from swarm.tui.widgets.panels import HardwarePanel
 
@@ -32,7 +32,7 @@ class SettingsScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("hardware & settings", classes="title")
         yield HardwarePanel(id="hw")
         with Horizontal(classes="row"):
             with Vertical(classes="half panel"):
@@ -40,7 +40,7 @@ class SettingsScreen(Screen):
                 yield Static(id="telemetry")
             with Vertical(classes="half panel"):
                 yield Static("Models (u unload · 1/2/3 pin tier · 0 clear pins)", classes="panel-title")
-                yield DataTable(id="models", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="models", cursor_type="row")
         yield Static(id="allocs", classes="detail")
         yield Footer()
 
@@ -68,7 +68,6 @@ class SettingsScreen(Screen):
             "",
             f"[b]Swarm ceiling[/] {settings.get('memory_ceiling_percent', 0):.0f}% of total  (+/- adjusts)",
             f"  target {gb(b.get('target'))}   usable now {gb(b.get('usable'))}   allocated {gb(b.get('allocated'))}   headroom {gb(b.get('headroom'))}   reserve {gb(b.get('reserve'))}",
-            f"  {bar((b.get('allocated') or 0) / max(1, b.get('target') or 1), 40, 'green')}",
             "",
             f"[b]Scheduler[/] {len(sched.get('instances') or [])} instances · {sched.get('active', 0)} inferring / cap {sched.get('inference_cap', 0)} · {sched.get('waiting', 0)} waiting for a model",
             f"  calls {st.get('calls', 0)}  failures {st.get('failures', 0)}  loads {st.get('loads', 0)}  unloads {st.get('unloads', 0)}  evictions {st.get('evictions', 0)}",

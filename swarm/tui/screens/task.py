@@ -9,7 +9,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import Screen
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Static
 
 from swarm.tui.format import conf, dur, status, trunc
 from swarm.tui.screens.dashboard import _refill
@@ -33,19 +33,19 @@ class TaskScreen(Screen):
         self.detail: dict[str, Any] = {}
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("task", classes="title")
         yield Static(id="summary", classes="detail")
         with Horizontal(classes="row"):
             with Vertical(classes="half panel"):
                 yield Static("DAG nodes (Enter opens the node's latest artifact)", classes="panel-title")
-                yield DataTable(id="nodes", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="nodes", cursor_type="row")
             with Vertical(classes="half panel"):
                 yield Static("Agents (Enter inspects)", classes="panel-title")
-                yield DataTable(id="agents", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="agents", cursor_type="row")
         with Horizontal(classes="row"):
             with Vertical(classes="half panel"):
                 yield Static("Artifacts (Enter opens)", classes="panel-title")
-                yield DataTable(id="artifacts", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="artifacts", cursor_type="row")
             with VerticalScroll(classes="half panel"):
                 yield Static("Selected node", classes="panel-title")
                 yield Static(id="node_detail")

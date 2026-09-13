@@ -9,9 +9,9 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Static
 
-from swarm.tui.format import conf, dur, gb, status, trunc
+from swarm.tui.format import conf, dur, status, trunc
 from swarm.tui.widgets.panels import EventLog, HardwarePanel
 
 
@@ -20,25 +20,21 @@ class DashboardScreen(Screen):
         Binding("enter", "open", "Open", show=True),
         Binding("space", "toggle_pause", "Pause/Resume"),
         Binding("c", "cancel", "Cancel task"),
-        Binding("r", "refresh_models", "Refresh models"),
-        Binding("tab", "focus_next", "Next panel", show=False),
+                Binding("tab", "focus_next", "Next panel", show=False),
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("swarm", classes="title")
         yield HardwarePanel(id="hw")
+        with Vertical(classes="panel"):
+            yield Static("tasks   (n new · Enter open · space pause/resume · c cancel)", classes="panel-title")
+            yield DataTable(id="tasks", cursor_type="row")
         with Horizontal(classes="row"):
             with Vertical(classes="half panel"):
-                yield Static("Tasks", classes="panel-title")
-                yield DataTable(id="tasks", cursor_type="row", zebra_stripes=True)
+                yield Static("agents", classes="panel-title")
+                yield DataTable(id="agents", cursor_type="row")
             with Vertical(classes="half panel"):
-                yield Static("Agents", classes="panel-title")
-                yield DataTable(id="agents", cursor_type="row", zebra_stripes=True)
-        with Horizontal(classes="row"):
-            with Vertical(classes="half panel"):
-                yield Static("Models", classes="panel-title")
-                yield DataTable(id="models", cursor_type="row", zebra_stripes=True)
-            with Vertical(classes="half"):
+                yield Static("events", classes="panel-title")
                 yield EventLog(id="log")
         yield Footer()
 
@@ -46,9 +42,7 @@ class DashboardScreen(Screen):
         t = self.query_one("#tasks", DataTable)
         t.add_columns("id", "status", "mode", "objective", "progress", "elapsed", "conf")
         a = self.query_one("#agents", DataTable)
-        a.add_columns("id", "role", "status", "model", "task", "tools", "elapsed")
-        m = self.query_one("#models", DataTable)
-        m.add_columns("model", "tier", "state", "mem", "active", "calls", "tok/s")
+        a.add_columns("role", "status", "model", "task", "tools", "elapsed")
         t.focus()
         if self.app.snapshot:
             self.update_from(self.app.snapshot)
@@ -79,21 +73,8 @@ class DashboardScreen(Screen):
                 a["id"], trunc(a["role"], 22), status(a["status"]), trunc(a.get("model") or "-", 18),
                 a["task_id"][-8:], ",".join(dict.fromkeys(a.get("tools") or []))[:14] or "-", dur(a.get("elapsed_s")),
             )
-            for a in live_first[:40]
-        ], key_index=0)
-        sched = snap.get("scheduler") or {}
-        inst = {i["name"]: i for i in sched.get("instances") or []}
-        rows = []
-        for m in sched.get("models") or []:
-            if m.get("disabled"):
-                continue
-            i = inst.get(m["name"])
-            rows.append((
-                m["name"], m["tier"], status(i["state"]) if i else "[dim]-[/]",
-                gb(i["memory"]) + ("" if i["observed"] else "~") if i else gb(m.get("observed_mem")) + ("~" if not m.get("observed_mem") else "") if m.get("observed_mem") else "-",
-                f"{i['active']}/{i['leases']}" if i else "-", str(m.get("calls", 0)), f"{m.get('tps', 0):.0f}" if m.get("tps") else "-",
-            ))
-        _refill(self.query_one("#models", DataTable), rows, key_index=0)
+            for a in live_first[:30]
+        ], key_index=0, hide_key=True)
 
     # --- actions ------------------------------------------------------------
 
@@ -170,8 +151,9 @@ def _task_conf(t: dict[str, Any], snap: dict[str, Any]) -> str:
     return "-"
 
 
-def _refill(table: DataTable, rows: list[tuple], key_index: int) -> None:
-    """Replace all rows, keeping the cursor on the same key when possible."""
+def _refill(table: DataTable, rows: list[tuple], key_index: int, hide_key: bool = False) -> None:
+    """Replace all rows, keeping the cursor on the same key when possible.
+    With hide_key the key column is used for identity only and not displayed."""
     prev_key = None
     if table.row_count and table.cursor_row is not None:
         try:
@@ -180,7 +162,8 @@ def _refill(table: DataTable, rows: list[tuple], key_index: int) -> None:
             prev_key = None
     table.clear()
     for r in rows:
-        table.add_row(*r, key=str(r[key_index]))
+        cells = tuple(c for i, c in enumerate(r) if not (hide_key and i == key_index))
+        table.add_row(*cells, key=str(r[key_index]))
     if prev_key is not None:
         for idx, r in enumerate(rows):
             if str(r[key_index]) == prev_key:

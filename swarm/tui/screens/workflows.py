@@ -15,7 +15,6 @@ from textual.widgets import (
     Checkbox,
     DataTable,
     Footer,
-    Header,
     Input,
     Label,
     Select,
@@ -40,10 +39,10 @@ class WorkflowsScreen(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("workflows", classes="title")
         with Vertical(classes="panel"):
             yield Static("Workflows  (Enter runs with an objective · n new · e edit · x delete)", classes="panel-title")
-            yield DataTable(id="wf", cursor_type="row", zebra_stripes=True)
+            yield DataTable(id="wf", cursor_type="row")
         yield Static(id="wf_detail", classes="detail")
         yield Footer()
 
@@ -155,7 +154,7 @@ class WorkflowEditor(Screen):
 
     def compose(self) -> ComposeResult:
         s = self.spec
-        yield Header(show_clock=True)
+        yield Static("workflows", classes="title")
         with VerticalScroll():
             yield Label("[b]Workflow[/]  (Ctrl+S saves to workspace/workflows · Ctrl+N add node · Enter edit node · Ctrl+R remove node)")
             with Horizontal():

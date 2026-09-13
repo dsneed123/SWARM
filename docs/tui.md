@@ -1,22 +1,40 @@
-# The terminal control center
+# Dashboard and command line
 
-`swarm` opens the TUI. It connects to the running service or, if there is
-none, runs the engine in-process. Everything is keyboard driven: arrows and
-Tab move, Enter opens, Esc goes back, `?` shows every key.
+`swarm` opens the dashboard (starting the service first if needed). It is
+deliberately plain: your terminal's colours, no boxes, colour only on
+things that need attention. Arrows and Tab move, Enter opens, Esc goes
+back, `?` lists every key.
+
+## The plain command line
+
+If you prefer not to have a full-screen view:
+
+```
+swarm prompt                     # a line prompt; type an objective, get the answer
+swarm ask "tallest mountain in Europe?"
+swarm run verified-research "..."
+swarm tasks | task <id> | status | models | workflows | permissions [profile]
+swarm stop
+```
+
+Inside `swarm prompt`, slash commands do the rest: `/tasks`, `/task <id>`,
+`/status`, `/models`, `/memory 60`, `/permissions normal`, `/allow github`,
+`/deny shell`, `/workflows`, `/run <slug> <objective>`, `/mode interactive`,
+`/cancel <id>`, `/quit`. Approvals and questions are asked inline; Ctrl+C
+cancels the running objective.
 
 ## Dashboard (`d`)
 
-Top: memory used vs total, swarm allocation vs target, GPU/CPU, loaded
-models, task counters, backend health. Then tasks (status, mode, progress
-`done/total`, elapsed, latest consensus confidence), agents (role, status,
-model, tools, elapsed), models (tier, state, memory, active/leases, calls,
-tokens/s) and a live event log.
+Two summary lines (memory, GPU, CPU, backend; swarm allocation vs target,
+loaded models, queue), then the task list (status, mode, progress
+`done/total`, elapsed, latest consensus confidence), live agents, and the
+event log. Models live on the Hardware screen.
 
 - `n` new objective. The dialog takes the objective (multi-line), mode
   (autonomous / interactive), a saved workflow or automatic planning, and
   optional tier, model pin, redundancy and priority. Ctrl+S submits.
 - `Enter` opens the selected task (or agent when the agents table has
-  focus). `space` pauses/resumes, `c` cancels, `r` refreshes models.
+  focus). `space` pauses/resumes, `c` cancels.
 
 ## Task (`Enter` on a task)
 

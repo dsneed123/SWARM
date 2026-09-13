@@ -8,38 +8,27 @@ from typing import Any
 from rich.markup import escape
 from textual.widgets import RichLog, Static
 
-from swarm.tui.format import bar, gb, pct
+from swarm.tui.format import gb, pct
 
 
 class HardwarePanel(Static):
-    """Compact live view of memory, swarm budget, GPU and CPU."""
+    """Two plain lines: machine state and swarm state."""
 
     def update_from(self, snap: dict[str, Any]) -> None:
         hw = snap.get("hardware") or {}
         sched = snap.get("scheduler") or {}
         budget = sched.get("budget") or {}
+        q = snap.get("queue") or {}
         total = hw.get("mem_total") or 1
         used = hw.get("mem_used") or 0
-        target = budget.get("target") or 1
-        allocated = budget.get("allocated") or 0
-        usable = budget.get("usable") or 0
-        lines = [
-            f"[b]Memory[/]   {bar(used / total, 24, 'cyan')} {gb(used)} / {gb(total)} used  ({gb(hw.get('mem_available'))} free)",
-            f"[b]Swarm[/]    {bar(allocated / target, 24, 'green' if allocated <= usable else 'red')} {gb(allocated)} / {gb(target)} target "
-            f"({budget.get('ceiling_percent', 0):.0f}%)  usable now {gb(usable)}",
-            f"[b]GPU[/]      {bar((hw.get('gpu_util') or 0) / 100, 24, 'magenta')} {pct(hw.get('gpu_util'))}"
-            + (f"  {hw.get('gpu_temp_c'):.0f}°C" if hw.get("gpu_temp_c") is not None else "")
-            + (f"  {hw.get('gpu_power_w'):.0f} W" if hw.get("gpu_power_w") is not None else "")
-            + f"    [b]CPU[/] {pct(hw.get('cpu_percent'))}  load {hw.get('load1', 0):.1f}",
-        ]
-        q = snap.get("queue") or {}
-        inst = sched.get("instances") or []
-        lines.append(
-            f"[b]Models[/]   {len(inst)} loaded, {sched.get('active', 0)} inferring, {sched.get('waiting', 0)} waiting"
-            f"    [b]Tasks[/] {q.get('active', 0)} active, {q.get('queued', 0)} queued"
-            f"    [b]Backend[/] {'[green]ok[/]' if snap.get('backend_ok') else '[red]unreachable[/]'}"
-        )
-        self.update("\n".join(lines))
+        gpu = f"gpu {pct(hw.get('gpu_util'))}" if hw.get("gpu_util") is not None else "gpu n/a"
+        temp = f" {hw.get('gpu_temp_c'):.0f}°C" if hw.get("gpu_temp_c") is not None else ""
+        backend = "backend ok" if snap.get("backend_ok") else "[red]backend unreachable[/]"
+        line1 = (f"memory {gb(used)} / {gb(total)} ({100 * used / total:.0f}%)   {gpu}{temp}   cpu {pct(hw.get('cpu_percent'))}   {backend}")
+        line2 = (f"swarm  {gb(budget.get('allocated'))} of {gb(budget.get('target'))} target ({budget.get('ceiling_percent', 0):.0f}%), "
+                 f"{gb(budget.get('usable'))} usable   {len(sched.get('instances') or [])} models loaded, {sched.get('active', 0)} inferring, "
+                 f"{sched.get('waiting', 0)} waiting   tasks {q.get('active', 0)} active, {q.get('queued', 0)} queued")
+        self.update(line1 + "\n" + line2)
 
 
 INTERESTING = {

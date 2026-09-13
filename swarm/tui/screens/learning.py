@@ -8,7 +8,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import DataTable, Footer, Header, Static
+from textual.widgets import DataTable, Footer, Static
 
 from swarm.tui.format import dur, trunc
 from swarm.tui.screens.dashboard import _refill
@@ -18,14 +18,14 @@ class LearningScreen(Screen):
     BINDINGS = [Binding("escape", "app.pop_screen", "Back")]
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("learning", classes="title")
         with Horizontal(classes="row"):
             with Vertical(classes="half panel"):
                 yield Static("Workflow knowledge (best compositions per objective class)", classes="panel-title")
-                yield DataTable(id="wk", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="wk", cursor_type="row")
             with Vertical(classes="half panel"):
                 yield Static("Recent failures and the recovery chosen", classes="panel-title")
-                yield DataTable(id="fail", cursor_type="row", zebra_stripes=True)
+                yield DataTable(id="fail", cursor_type="row")
         yield Static(id="note", classes="detail")
         yield Footer()
 

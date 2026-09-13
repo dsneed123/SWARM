@@ -10,7 +10,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.screen import Screen
-from textual.widgets import Footer, Header, Static
+from textual.widgets import Footer, Static
 
 from swarm.tui.format import conf, dur, gb, status
 
@@ -30,7 +30,7 @@ class AgentScreen(Screen):
         self.show_transcript = True
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("agent", classes="title")
         with VerticalScroll():
             yield Static(id="body")
         yield Footer()
@@ -109,7 +109,7 @@ class ArtifactScreen(Screen):
         self.raw = False
 
     def compose(self) -> ComposeResult:
-        yield Header(show_clock=True)
+        yield Static("agent", classes="title")
         with VerticalScroll():
             yield Static(id="body")
         yield Footer()
