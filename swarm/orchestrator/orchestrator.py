@@ -48,6 +48,28 @@ from swarm.workflow.library import WorkflowLibrary
 log = logging.getLogger(__name__)
 
 
+def citable_sources(artifacts: list[Artifact], limit: int = 15) -> dict[str, Evidence]:
+    """External sources worth citing: real URLs or paths attached to supporting claims,
+    best evidence first. Pages an agent merely opened ("consulted") only count when
+    nothing better exists."""
+    cited: dict[str, Evidence] = {}
+    consulted: dict[str, Evidence] = {}
+    for a in artifacts:
+        for e in a.evidence:
+            src = (e.source or "").strip()
+            if not src or e.source_type not in ("web", "file") or not e.supports:
+                continue
+            if "://" not in src and "/" not in src and "." not in src:
+                continue  # "Wikipedia page" is not a citation
+            bucket = consulted if e.claim.lower().startswith("consulted:") else cited
+            if src not in bucket or e.quality > bucket[src].quality:
+                bucket[src] = e
+    ranked = sorted(cited.values(), key=lambda e: e.quality, reverse=True)
+    if not ranked:
+        ranked = sorted(consulted.values(), key=lambda e: e.quality, reverse=True)
+    return {e.source: e for e in ranked[:limit] if e.source}
+
+
 @dataclass
 class TaskRun:
     task: Task
@@ -742,11 +764,7 @@ class Orchestrator:
         if art is None:
             art = Artifact(kind="failure", conclusion="no result artifact", confidence=0.0,
                            provenance=Provenance(task_id=run.task.id, node_id="final"))
-        sources: dict[str, Evidence] = {}
-        for a in self.artifacts.ancestry(art.id):
-            for e in a.evidence:
-                if e.source and e.source_type in ("web", "file") and e.source not in sources:
-                    sources[e.source] = e
+        sources = citable_sources(self.artifacts.ancestry(art.id))
         content = art.content or art.conclusion
         if self.settings.orchestrator.cite_sources and sources and "Sources:" not in content:
             lines = [f"[{i + 1}] {e.source}" + (f" (retrieved {e.retrieved_at[:10]})" if e.retrieved_at else "") for i, e in enumerate(sources.values())]

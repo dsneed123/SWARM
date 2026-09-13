@@ -87,3 +87,21 @@ def test_diagnosis_strategies():
     d = diagnose(fc("model", alternatives=0))
     assert d.action == "escalate_tier" and d.changes["tier"] == Tier.DEEP
     assert diagnose(fc("context", attempt=2)).action == "split"
+
+
+def test_citable_sources_filters_noise():
+    from swarm.orchestrator.orchestrator import citable_sources
+
+    arts = [
+        make_artifact(evidence=[
+            Evidence(claim="Brazil is 8.5M km2", source="https://en.wikipedia.org/wiki/Brazil", source_type="web", quality=0.9),
+            Evidence(claim="Australia is 7.7M km2", source="Geoscience Australia page", source_type="web", quality=0.9),
+            Evidence(claim="consulted: GDP per capita", source="https://data.worldbank.org/gdp", source_type="web", quality=0.3),
+            Evidence(claim="contradicting figure", source="https://example.org/wrong", source_type="web", quality=0.8, supports=False),
+            Evidence(claim="model memory", source=None, source_type="model", quality=0.5),
+        ]),
+    ]
+    out = citable_sources(arts)
+    assert list(out) == ["https://en.wikipedia.org/wiki/Brazil"]
+    only_consulted = [make_artifact(evidence=[Evidence(claim="consulted: x", source="https://a/b", source_type="web", quality=0.3)])]
+    assert list(citable_sources(only_consulted)) == ["https://a/b"]
