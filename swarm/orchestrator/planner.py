@@ -84,7 +84,8 @@ class Planner:
         guess = classify_heuristically(objective)
         hint = self.knowledge.suggest(guess)
         if hint:
-            user += (f"\nA composition that worked well before for similar ({guess}) objectives: {hint.signature} "
+            shape = " -> ".join(f"{n['capability']} x{n['redundancy']} ({n['tier']})" for n in hint.nodes)
+            user += (f"\nA composition that worked well before for similar ({guess}) objectives: {shape} "
                      f"(avg confidence {hint.avg_confidence:.2f}, {hint.avg_duration_s:.0f}s). Use it as a starting point if it fits.\n")
         if overrides.get("tier"):
             user += f"\nThe user requested the {overrides['tier']} tier for the main work.\n"
